@@ -1,9 +1,12 @@
 USE_CAMERA_STUB := false
 BOARD_USES_GENERIC_AUDIO := false
+BOARD_COMBO_DEVICE_SUPPORTED := true
+COMMON_GLOBAL_CFLAGS += -DBINDER_COMPAT
 
 TARGET_SPECIFIC_HEADER_PATH := device/samsung/janice/include
 
 # Architecture
+TARGET_ARCH := arm
 TARGET_CPU_ABI := armeabi-v7a
 TARGET_CPU_ABI2 := armeabi
 TARGET_CPU_SMP := true
@@ -26,6 +29,7 @@ TARGET_PROVIDES_INIT := true
 TARGET_PROVIDES_INIT_TARGET_RC := true
 TARGET_RECOVERY_INITRC := device/samsung/janice/rootdir/recovery.rc
 BOARD_HAS_VIBRATOR_IMPLEMENTATION := ../../device/samsung/janice/vibrator/vibrator.c
+DEVICE_RESOLUTION := 800x480
 
 # Flags
 TARGET_GLOBAL_CFLAGS += -mfpu=neon -mfloat-abi=softfp
@@ -58,6 +62,9 @@ COMMON_GLOBAL_CFLAGS += -DSAMSUNG_STE
 # Graphics
 BOARD_EGL_CFG := device/samsung/janice/configs/egl.cfg
 USE_OPENGL_RENDERER := true
+COMMON_GLOBAL_CFLAGS += -DREFRESH_RATE=60
+BOARD_USE_NASTY_PTHREAD_CREATE_HACK := true
+TARGET_NO_HW_VSYNC := true
 
 # Enable WEBGL in WebKit
 ENABLE_WEBGL := true
@@ -68,6 +75,8 @@ BOARD_USES_HWCOMPOSER := true
 # RIL
 BOARD_USES_LIBSECRIL_STUB := true
 BOARD_MOBILEDATA_INTERFACE_NAME := "pdp0"
+BOARD_FORCE_RILD_AS_ROOT := true
+TARGET_PROVIDES_LIBRIL := true
 
 # Wifi
 BOARD_WLAN_DEVICE                := bcmdhd
@@ -86,6 +95,8 @@ WIFI_DRIVER_MODULE_NAME          := "dhd"
 WIFI_DRIVER_MODULE_ARG           := "firmware_path=/system/etc/wifi/bcmdhd_sta.bin nvram_path=/system/etc/wifi/nvram_net.txt"
 WIFI_DRIVER_MODULE_AP_ARG        := "firmware_path=/system/etc/wifi/bcmdhd_apsta.bin nvram_path=/system/etc/wifi/nvram_net.txt"
 WIFI_BAND                        := 802_11_ABG
+BOARD_HAVE_SAMSUNG_WIFI := true
+
 
 # Bluetooth
 BOARD_HAVE_BLUETOOTH := true
