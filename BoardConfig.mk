@@ -63,7 +63,6 @@ COMMON_GLOBAL_CFLAGS += -DSAMSUNG_STE
 BOARD_EGL_CFG := device/samsung/janice/configs/egl.cfg
 USE_OPENGL_RENDERER := true
 COMMON_GLOBAL_CFLAGS += -DREFRESH_RATE=60
-BOARD_USE_NASTY_PTHREAD_CREATE_HACK := true
 TARGET_NO_HW_VSYNC := true
 
 # Enable WEBGL in WebKit
@@ -123,8 +122,6 @@ BOARD_BATTERY_DEVICE_NAME := "battery"
 BOARD_CHARGER_RES := device/samsung/janice/res/charger
 
 # Releasetools
-TARGET_RELEASETOOL_OTA_FROM_TARGET_SCRIPT := device/samsung/janice/releasetools/janice_ota_from_target_files
-TARGET_RELEASETOOL_IMG_FROM_TARGET_SCRIPT := device/samsung/janice/releasetools/janice_img_from_target_files
 BOARD_CUSTOM_BOOTIMG_MK := device/samsung/janice/shbootimg.mk
 
 TARGET_OTA_ASSERT_DEVICE := janice,i9070,GT-I9070
