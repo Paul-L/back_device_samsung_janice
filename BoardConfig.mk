@@ -1,7 +1,9 @@
 USE_CAMERA_STUB := false
 BOARD_USES_GENERIC_AUDIO := false
 BOARD_COMBO_DEVICE_SUPPORTED := true
-COMMON_GLOBAL_CFLAGS += -DBINDER_COMPAT
+
+# IMPORTANT FOR AUDIO AND OTHER LIBS
+COMMON_GLOBAL_CFLAGS += -DMR0_AUDIO_BLOB
 
 TARGET_SPECIFIC_HEADER_PATH := device/samsung/janice/include
 
@@ -20,7 +22,7 @@ TARGET_BOARD_PLATFORM := montblanc
 TARGET_SOC := u8500
 TARGET_BOOTLOADER_BOARD_NAME := montblanc
 BOARD_USES_STE_HARDWARE := true
-COMMON_GLOBAL_CFLAGS += -DSTE_HARDWARE
+COMMON_GLOBAL_CFLAGS += -DSTE_HARDWARE -DSAMSUNG_STE -DSTE_AUDIO
 
 TARGET_NO_BOOTLOADER := true
 TARGET_NO_RADIOIMAGE := true
@@ -30,10 +32,11 @@ TARGET_PROVIDES_INIT_TARGET_RC := true
 TARGET_RECOVERY_INITRC := device/samsung/janice/rootdir/recovery.rc
 BOARD_HAS_VIBRATOR_IMPLEMENTATION := ../../device/samsung/janice/vibrator/vibrator.c
 DEVICE_RESOLUTION := 800x480
+TARGET_USE_ST_ERICSSON_KERNEL := true
 
 # Flags
-TARGET_GLOBAL_CFLAGS += -mfpu=neon -mfloat-abi=softfp
-TARGET_GLOBAL_CPPFLAGS += -mfpu=neon -mfloat-abi=softfp
+TARGET_GLOBAL_CFLAGS += -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp
+TARGET_GLOBAL_CPPFLAGS += -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp
 
 # Kernel
 BOARD_KERNEL_CMDLINE := "console=ttySAC2,115200"
@@ -62,8 +65,6 @@ COMMON_GLOBAL_CFLAGS += -DSAMSUNG_STE
 # Graphics
 BOARD_EGL_CFG := device/samsung/janice/configs/egl.cfg
 USE_OPENGL_RENDERER := true
-COMMON_GLOBAL_CFLAGS += -DREFRESH_RATE=60
-TARGET_NO_HW_VSYNC := true
 
 # Enable WEBGL in WebKit
 ENABLE_WEBGL := true
@@ -74,32 +75,31 @@ BOARD_USES_HWCOMPOSER := true
 # RIL
 BOARD_USES_LIBSECRIL_STUB := true
 BOARD_MOBILEDATA_INTERFACE_NAME := "pdp0"
-BOARD_FORCE_RILD_AS_ROOT := true
 TARGET_PROVIDES_LIBRIL := true
 
 # Wifi
-BOARD_WLAN_DEVICE                := bcmdhd
-BOARD_WLAN_DEVICE_REV            := bcm4330
-WPA_SUPPLICANT_VERSION           := VER_0_8_X
-BOARD_WPA_SUPPLICANT_DRIVER      := NL80211
+BOARD_WLAN_DEVICE := bcmdhd
+BOARD_WLAN_DEVICE_REV := bcm4334_B2
+WPA_SUPPLICANT_VERSION := VER_0_8_X
+BOARD_WPA_SUPPLICANT_DRIVER := NL80211
 BOARD_WPA_SUPPLICANT_PRIVATE_LIB := lib_driver_cmd_bcmdhd
-BOARD_HOSTAPD_DRIVER             := NL80211
-BOARD_HOSTAPD_PRIVATE_LIB        := lib_driver_cmd_bcmdhd
-WIFI_DRIVER_MODULE_PATH          := "/system/lib/modules/dhd.ko"
-WIFI_DRIVER_FW_PATH_PARAM        := "/sys/module/dhd/parameters/firmware_path"
-WIFI_DRIVER_FW_PATH_STA          := "/system/etc/wifi/bcmdhd_sta.bin"
-WIFI_DRIVER_FW_PATH_AP           := "/system/etc/wifi/bcmdhd_apsta.bin"
-WIFI_DRIVER_FW_PATH_P2P          := "/system/etc/wifi/bcmdhd_p2p.bin"
-WIFI_DRIVER_MODULE_NAME          := "dhd"
-WIFI_DRIVER_MODULE_ARG           := "firmware_path=/system/etc/wifi/bcmdhd_sta.bin nvram_path=/system/etc/wifi/nvram_net.txt"
-WIFI_DRIVER_MODULE_AP_ARG        := "firmware_path=/system/etc/wifi/bcmdhd_apsta.bin nvram_path=/system/etc/wifi/nvram_net.txt"
-WIFI_BAND                        := 802_11_ABG
+BOARD_HOSTAPD_DRIVER := NL80211
+BOARD_HOSTAPD_PRIVATE_LIB := lib_driver_cmd_bcmdhd
+WIFI_DRIVER_MODULE_PATH := "/system/lib/modules/dhd.ko"
+WIFI_DRIVER_FW_PATH_PARAM := "/sys/module/dhd/parameters/firmware_path"
+WIFI_DRIVER_FW_PATH_STA := "/system/etc/wifi/bcmdhd_sta.bin"
+WIFI_DRIVER_FW_PATH_AP := "/system/etc/wifi/bcmdhd_apsta.bin"
+WIFI_DRIVER_FW_PATH_P2P := "/system/etc/wifi/bcmdhd_p2p.bin"
+WIFI_DRIVER_MODULE_NAME := "dhd"
+WIFI_DRIVER_MODULE_ARG := "firmware_path=/system/etc/wifi/bcmdhd_sta.bin nvram_path=/system/etc/wifi/nvram_net.txt"
+WIFI_DRIVER_MODULE_AP_ARG := "firmware_path=/system/etc/wifi/bcmdhd_apsta.bin nvram_path=/system/etc/wifi/nvram_net.txt"
 BOARD_HAVE_SAMSUNG_WIFI := true
 
 
 # Bluetooth
-BOARD_HAVE_BLUETOOTH := true
 BOARD_HAVE_BLUETOOTH_BCM := true
+BOARD_HAVE_BLUETOOTH_BLUEZ := true
+BOARD_HAVE_SAMSUNG_BLUETOOTH := true
 
 # Vold
 BOARD_VOLD_MAX_PARTITIONS := 12
