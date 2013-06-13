@@ -7,6 +7,9 @@ DEVICE_PACKAGE_OVERLAYS += $(LOCAL_PATH)/overlay
 PRODUCT_AAPT_CONFIG := normal hdpi
 PRODUCT_AAPT_PREF_CONFIG := hdpi
 
+PRODUCT_PACKAGES += \
+    audio.primary.$(TARGET_BOARD_PLATFORM)
+
 # Init files
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/fstab.samsungjanice:root/fstab.samsungjanice \
@@ -40,9 +43,21 @@ PRODUCT_COPY_FILES += \
 
 $(call inherit-product, device/common/gps/gps_eu_supl.mk)
 
+# BT PACKAGES
+PRODUCT_PACKAGES += \
+    libasound_module_ctl_bluetooth \
+    libasound_module_pcm_bluetooth \
+    brcm_patchram_plus \
+    hciattach
+
 # Bluetooth configuration files
 PRODUCT_COPY_FILES += \
     system/bluetooth/data/main.le.conf:system/etc/bluetooth/main.conf
+# BLUETOOTH HACK, NEEDS INIT.D SUPPORT
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/prebuilt/01bt/:system/etc/init.d/01bt \
+    $(LOCAL_PATH)/prebuilt/bt_vendor.conf/:system/etc/bluetooth/bt_vendor.conf
+    
 
 # Wifi
 PRODUCT_COPY_FILES += \
@@ -100,12 +115,13 @@ PRODUCT_PACKAGES += \
     audio.usb.default \
     com.android.future.usb.accessory \
     libaudioutils \
+    libnetcmdiface.so \
     libtinyalsa \
     Torch
 
 # RIL
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.telephony.ril_class=Smdk4210RIL \
+    ro.telephony.ril_class=SamsungExynos4RIL \
     mobiledata.interfaces=pdp0,wlan0,gprs,ppp0 \
     ro.ril.hsxpa=1 \
     ro.ril.gprsclass=10
@@ -176,9 +192,9 @@ PRODUCT_TAGS += dalvik.gc.type-precise
 
 # Set default USB interface
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
-    persist.sys.usb.config=mtp
+    persist.sys.usb.config=mtp,adb
 
 $(call inherit-product, frameworks/native/build/phone-hdpi-512-dalvik-heap.mk)
 
 # Use non-open-source parts if present
-$(call inherit-product-if-exists, vendor/samsung/janice/janice-vendor.mk)
+$(call inherit-product, vendor/samsung/janice-vendor-blobs.mk)

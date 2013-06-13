@@ -50,7 +50,6 @@ on init
 on fs
 
     mount_all /fstab.samsungjanice
-    setprop ro.crypto.fuse_sdcard false
 	
     # Start CSPSA before synchronously running the factory reset utility that
     # checks the factory reset triggers in sysfs and CSPSA and then formats
@@ -62,6 +61,21 @@ on post-fs
 
     chown radio radio /modemfs
     chmod 0771 /modemfs
+    chown radio radio /modemfs/APPL
+    mkdir /modemfs/APPL
+    chmod 0755 /modemfs/APPL
+    mkdir /modemfs/BOOT
+    chown radio radio /modemfs/BOOT
+    chmod 0755 /modemfs/BOOT
+    mkdir /modemfs/DO
+    chown radio radio /modemfs/DO
+    chmod 0755 /modemfs/DO
+    mkdir /modemfs/LOG
+    chown radio radio /modemfs/LOG
+    chmod 0755 /modemfs/LOG
+    mkdir /modemfs/TMP
+    chown radio radio /modemfs/TMP
+    chmod 0755 /modemfs/TMP
     chown radio radio /modemfs/CONF
     chmod 0755 /modemfs/CONF
     chown radio radio /modemfs/CONF/MCE
@@ -84,7 +98,8 @@ on post-fs
     chown radio system /efs/imei
     chmod 0770 /efs/imei
     chown radio system /efs/bluetooth
-    chown system system /efs/wifi
+    chown radio system /efs/wifi
+    mkdir /data/mediaserver 0740 media media
 
     # Samsung Device permissions
     chown root system /dev/mmc328x
@@ -268,7 +283,7 @@ on post-fs-data
     chown root radio /data/misc/ril_config
 
     # Create directory for STE OMX debug logs
-    mkdir /data/ste-debug 0775 system system
+    mkdir /data/ste-debug 0777 root root
 
     # give system access to sterc_script when enabling usb nap
     copy -u /system/etc/psdata/sterc_conf /data/misc/psdata/sterc_conf
@@ -320,6 +335,10 @@ on early-boot
     write /sys/module/cm/parameters/enable_auto_pm 1
 
 on boot
+
+
+    # Run sysinit
+    exec /system/bin/sysinit
 
     # debugfs
     mount debugfs /sys/kernel/debug /sys/kernel/debug
@@ -381,34 +400,29 @@ on boot
 
 # Peremissions for bluetooth
     # UART device
-    chown bluetooth bluetooth /dev/ttyAMA0
+    chown bluetooth net_bt_stack /dev/ttyAMA0
     chmod 0660 /dev/ttyAMA0
 
 # for bluetooth. change access rights as btld runs as bluetooth user
-    chown root bluetooth /sys/class/rfkill/rfkill0
-    chown root bluetooth /sys/class/rfkill/rfkill0/state
-    chown root bluetooth /sys/class/rfkill/rfkill0/claim	
-    chown root bluetooth /sys/class/rfkill/rfkill0/soft
-    chown root bluetooth /sys/class/rfkill/rfkill0/type
+    chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0
+    chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/claim	
+    chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/soft
     chmod 0664 /sys/class/rfkill/rfkill0/state
     chmod 0664 /sys/class/rfkill/rfkill0/claim
     chmod 0664 /sys/class/rfkill/rfkill0/soft
-    chmod 0664 /sys/class/rfkill/rfkill0/type
     setprop service.brcm.bt.pbap_mode btld
 
 # power up/down interface
+    chmod 0660 /sys/class/rfkill/rfkill0/type
     chmod 0660 /sys/class/rfkill/rfkill0/state
-    chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
-    chown bluetooth bluetooth /sts/class/rfkill/rfkill0/type
+    chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/state
+    chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/type
 
 # bluetooth MAC address programming
     setprop ro.bt.bdaddr_path "/efs/bluetooth/bt_addr"
     chown bluetooth bluetooth ro.bt.bdaddr_path
     chown bluetooth bluetooth /system/etc/bt_addr
     chmod 0644 /efs/bluetooth/addr.txt
-
-    chown bluetooth /dev/ttyAMA0
-    chmod 0660 /dev/ttyAMA0
 
     # Permissions for LCD
     chown system system /sys/class/backlight/panel/brightness
@@ -508,6 +522,52 @@ service copsd /system/bin/copsdaemon
     class modem-core
     user root
 
+service bdaddr /system/bin/bdaddr_read
+    class main
+    user root
+    disabled
+    oneshot
+
+service dbus /system/bin/dbus-daemon --system --nofork
+    socket dbus stream 660 bluetooth bluetooth
+    user bluetooth
+    group bluetooth net_bt_admin
+
+service bluetoothd /system/bin/bluetoothd -n
+    socket bluetooth stream 660 bluetooth bluetooth
+    socket dbus_bluetooth stream 660 bluetooth bluetooth
+    # init.rc does not yet support applying capabilities, so run as root and
+    # let bluetoothd drop uid to bluetooth with the right linux capabilities
+    group bluetooth net_bt_admin misc
+    disabled
+
+service hfag /system/bin/sdptool add --channel=10 HFAG
+    user bluetooth
+    group bluetooth net_bt_admin
+    disabled
+    oneshot
+
+service hsag /system/bin/sdptool add --channel=11 HSAG
+    user bluetooth
+    group bluetooth net_bt_admin
+    disabled
+    oneshot
+
+service opush /system/bin/sdptool add --channel=12 OPUSH
+    user bluetooth
+    group bluetooth net_bt_admin
+    disabled
+    oneshot
+
+service pbap /system/bin/sdptool add --channel=19 PBAP
+    user bluetooth
+    group bluetooth net_bt_admin
+    disabled
+    oneshot
+
+on property:ril.bt_macaddr=*
+    start bdaddr
+
 # Modem_log_relay
 service modem_log_relay /system/bin/modem_log_relay --ctrl_port=2001 --data_port=2002 --inv_port=2003 --report_port=2005
     class modem
@@ -548,7 +608,7 @@ service at_distributor /system/bin/at_distributor
     user root
     group radio log
 
-service watchdog-kicker /system/xbin/watchdog-kicker -d /dev/watchdog -t 120
+service watchdog-kicker /system/xbin/watchdog -d /dev/watchdog -t 120
     class main
     oneshot
 
@@ -579,16 +639,31 @@ service immvibed /system/bin/immvibed
     group shell
     oneshot
 
+service mtpd /system/bin/mtpd
+    socket mtpd stream 600 system system
+    user vpn
+    group vpn net_admin net_raw
+    disabled
+    oneshot
+
 on property:ro.dumpstate.dmesg=1
     write /proc/sys/kernel/dmesg_restrict 0
 
-service wpa_supplicant /system/bin/wpa_supplicant -Dnl80211 -iwlan0 -puse_p2p_group_interface=1 -e/data/misc/wifi/entropy.bin
+service p2p_supplicant /system/bin/wpa_supplicant \
+        -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf \
+         -e/data/misc/wifi/entropy.bin -puse_p2p_group_interface=1
+#   we will start as root and wpa_supplicant will switch to user wifi
+#   after setting up the capabilities required for WEXT
+#   user wifi
+#   group wifi inet keystore
     class main
     socket wpa_wlan0 dgram 660 wifi wifi
     disabled
     oneshot
 
-service wpa_supplicant /system/bin/wpa_supplicant -Dnl80211 -iwlan0 -puse_p2p_group_interface=1 -e/data/misc/wifi/entropy.bin
+service wpa_supplicant /system/bin/wpa_supplicant \
+        -Dnl80211 -iwlan0 -e/data/misc/wifi/entropy.bin \
+        -c/data/misc/wifi/wpa_supplicant.conf
     class main
     socket wpa_wlan0 dgram 660 wifi wifi
     disabled
@@ -600,11 +675,6 @@ service dhcpcd_wlan0 /system/bin/dhcpcd -ABKL
     oneshot
 
 service dhcpcd_p2p /system/bin/dhcpcd -aABKL
-    class main
-    disabled
-    oneshot
-
-service dhcpcd_bnep0 /system/bin/dhcpcd -ABKL
     class main
     disabled
     oneshot
@@ -628,7 +698,6 @@ service iprenew_bnep0 /system/bin/dhcpcd -n
 service mfgloader /system/bin/mfgloader
     class main
     disabled
-    oneshot
 
 service wlandutservice /system/bin/wlandutservice
     class main
