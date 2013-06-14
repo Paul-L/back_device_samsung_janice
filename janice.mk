@@ -7,9 +7,6 @@ DEVICE_PACKAGE_OVERLAYS += $(LOCAL_PATH)/overlay
 PRODUCT_AAPT_CONFIG := normal hdpi
 PRODUCT_AAPT_PREF_CONFIG := hdpi
 
-PRODUCT_PACKAGES += \
-    audio.primary.$(TARGET_BOARD_PLATFORM)
-
 # Init files
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/fstab.samsungjanice:root/fstab.samsungjanice \
@@ -113,6 +110,8 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     audio.a2dp.default \
     audio.usb.default \
+    LegacyCamera \
+    libcamera_flash \
     com.android.future.usb.accessory \
     libaudioutils \
     libnetcmdiface.so \
