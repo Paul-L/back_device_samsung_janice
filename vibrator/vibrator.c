@@ -71,4 +71,3 @@ int vibrator_off()
 	return (vibrator_exists() == 0) ? 0 : 1;
 }
 
-#endif
