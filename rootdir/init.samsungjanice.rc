@@ -220,7 +220,15 @@ on post-fs-data
     mkdir /efs/bluetooth 0775 radio system
     mkdir /efs/imei 0775 radio system
     chmod 0660 /data/misc/wifi/wpa_supplicant.conf
-    mkdir /data/misc/wifi/sockets 0770 wifi wifi
+    chmod 0660 /data/misc/wifi/hostapd.conf
+    mkdir /data/misc/wifi/sockets 0770 wifi wifi 
+    mkdir /data/misc/wifi/sockets/p2p0 0770 wifi wifi
+    mkdir /data/misc/wifi/p2p0 0770 wifi wifi
+    symlink /data/misc/p2p0 /data/misc/wifi/sockets/p2p0
+    chmod 0777 /data/misc/wifi/p2p0
+    chown wifi wifi data/misc/wifi/p2p0
+     
+
     mkdir /data/misc/dhcp 0775 dhcp dhcp
     chown dhcp dhcp /data/misc/dhcp
     chown system system /efs/wifi/.mac.info
@@ -240,6 +248,9 @@ on post-fs-data
     chmod 0775 /data/log
     chmod 0775 /data/anr
 
+
+    # After we setup wireless subsystem, let dnsmasq create files for soft ap
+    chown dhcp system /data/misc/dhcp
 #[ SEC_MM_DRM
     # DRM directory creation
     mkdir /system/etc/security/.drm 0775
@@ -678,6 +689,15 @@ service dhcpcd_p2p /system/bin/dhcpcd -aABKL
     class main
     disabled
     oneshot
+
+service dhcpcd_bnep0 /system/bin/dhcpcd -BKLG
+    # This properly enables bluetooth tethering, it asigns a IP to any conected device
+    disabled
+    oneshot
+
+on property:ro.data.large_tcp_window_size=true
+    # We enable receiving of high-speed conections via ipv4
+    write /proc/sys/net/ipv4/tcp_adv_win_scale  1
 
 service iprenew_wlan0 /system/bin/dhcpcd -n
     class main

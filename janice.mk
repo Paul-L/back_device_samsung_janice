@@ -185,6 +185,10 @@ PRODUCT_COPY_FILES += \
 
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.opengles.version=131072 \
+    wifi.ap.interface=p2p0 \
+    video.accelerate.hw=1 \
+    debug.composition.type=gpu \
+    ro.data.large_tcp_window_size=true \
     hwui.render_dirty_regions=false
 
 PRODUCT_TAGS += dalvik.gc.type-precise
