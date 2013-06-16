@@ -903,7 +903,7 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
 
         SignalStrength signalStrength = new SignalStrength(
 	            response[0], response[1], response[2], response[3], response[4],
-	            response[5], response[6], !mIsSamsungCdma);
+	            response[5], response[6]);
         return signalStrength;
     }
 
