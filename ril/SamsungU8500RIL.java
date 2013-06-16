@@ -159,7 +159,7 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
     private AudioManager audioManager;
     private boolean mIsGBModem = SystemProperties.getBoolean("ro.ril.gbmodem", false);
 
-    public Samsungu8500RIL(Context context, int networkMode, int cdmaSubscription) {
+    public SamsungU8500RIL(Context context, int networkMode, int cdmaSubscription) {
         super(context, networkMode, cdmaSubscription);
         audioManager = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
         mQANElements = 5;
