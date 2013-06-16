@@ -110,19 +110,20 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     audio.a2dp.default \
     audio.usb.default \
-    LegacyCamera \
-    libcamera_flash \
     com.android.future.usb.accessory \
     libaudioutils \
-    libnetcmdiface.so \
     libtinyalsa \
     Torch
 
 # RIL
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.telephony.ril_class=SamsungExynos4RIL \
+    ro.telephony.ril_class=U8500RIL \
     mobiledata.interfaces=pdp0,wlan0,gprs,ppp0 \
     ro.ril.hsxpa=1 \
+    dev.sfbootcomplete=0 \
+    ro.com.google.locationfeatures=1 \
+    ro.setupwizard.enable_bypass=1 \
+    ro.config.play.bootsound=0 \
     ro.ril.gprsclass=10
 
 PRODUCT_COPY_FILES += \
@@ -148,6 +149,7 @@ PRODUCT_PACKAGES += \
     LiveWallpapers \
     LiveWallpapersPicker \
     MagicSmokeWallpapers \
+    macloader \
     NoiseField \
     PhaseBeam \
     VisualizationWallpapers \
@@ -185,9 +187,10 @@ PRODUCT_COPY_FILES += \
 
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.opengles.version=131072 \
-    wifi.ap.interface=p2p0 \
+    wifi.ap.interface=rmnet0 \
     video.accelerate.hw=1 \
     debug.composition.type=gpu \
+    ro.telephony.sends_barcount=1 \
     ro.data.large_tcp_window_size=true \
     hwui.render_dirty_regions=false
 

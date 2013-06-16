@@ -49,6 +49,10 @@
 # Trusted Eexecution Engine
 /dev/tee                  0666   root       system
 
+/dev/socket/cops.socket   0777   nobody   nobody
+/dev/socket/cspsa_socket_CSPSA0   0666   root   root
+/dev/db8500-modem-trace   0600   root   root
+/dev/dbx500_mloader_fw   0600   root   root
 /dev/block/mmcblk0p19     0660   system     system
 
 # Sensors

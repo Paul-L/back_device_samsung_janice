@@ -33,3 +33,5 @@ ste.cam.back.orientation=90
 
 # STE: Camera file path configuration
 ste.cam.ext.cfg.path.secondary=/system/usr/share/camera/config_file/samsung_s5k4ecgx_janice.dat
+
+ste.omx.ctx=0

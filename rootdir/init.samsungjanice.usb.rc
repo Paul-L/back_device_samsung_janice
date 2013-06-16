@@ -1,5 +1,5 @@
 # USB initialization
-# write /sys/devices/platform/ab8500-i2c.0/ab8500-usb.0/boot_time_device 1
+# 
 
 on init
     write /sys/class/android_usb/android0/iSerial ${ro.serialno}
@@ -10,6 +10,7 @@ on init
 on boot
     write /sys/class/android_usb/android0/iManufacturer ${ro.product.manufacturer}
     write /sys/class/android_usb/android0/iProduct ${ro.product.model}
+    write /sys/devices/platform/ab8500-i2c.0/ab8500-usb.0/boot_time_device 1
 
 on post-fs-data
     chown system system /sys/class/android_usb/android0/f_mass_storage/lun0/file

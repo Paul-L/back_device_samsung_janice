@@ -87,8 +87,7 @@
 		 
 	<!-- Experimental / WIFI tethering -->
     <string-array translatable="false" name="config_tether_wifi_regexs">
-        <item>"p2p0"</item>
-        <item>"wlan0"</item>
+        <item>"rmnet0"</item>
     </string-array>
 
     <!-- List of regexpressions describing the interface (if any) that represent tetherable
@@ -113,7 +112,7 @@
 
 
     <!-- Boolean indicating whether Softap requires reloading AP firmware -->
-    <bool name="config_wifiApFirmwareReload">false</bool>
+    <bool name="config_wifiApFirmwareReload">true</bool>
 
     <!-- Boolean indicating whether the wifi chipset has dual frequency band support -->
     <bool translatable="false" name="config_wifi_dual_band_support">true</bool>
@@ -202,7 +201,7 @@
     <!-- LUN file to be used by legacy USB manager.
     The existence of this file will be used to determine in the
     legacy USB manager should be started. -->
-    <string name="config_legacyUmsLunFile">/sys/devices/platform/musb-ux500.0/musb-hdrc/gadget/lun%d/file</string>
+    <string name="config_legacyUmsLunFile">/sys/devices/virtual/android_usb/android0/f_mass_storage/lun%d/file</string>
     
     <string-array name="config_locationProviderPackageNames" translatable="false">
         <!-- The standard AOSP fused location provider -->
