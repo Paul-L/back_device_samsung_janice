@@ -46,15 +46,11 @@ import android.os.SystemProperties;
 import android.os.PowerManager.WakeLock;
 import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneNumberUtils;
+import android.telephony.SignalStrength;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.text.TextUtils;
 import android.util.Log;
-
-import com.android.internal.telephony.gsm.SmsBroadcastConfigInfo;
-import com.android.internal.telephony.gsm.SuppServiceNotification;
-import com.android.internal.telephony.cdma.CdmaCallWaitingNotification;
-import com.android.internal.telephony.cdma.CdmaInformationRecords;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -64,6 +60,7 @@ import java.lang.Runtime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+
 
 public class U8500RIL extends RIL implements CommandsInterface {
 
@@ -863,8 +860,10 @@ public class U8500RIL extends RIL implements CommandsInterface {
         Log.d(LOG_TAG, "responseSignalStength BEFORE: gsmDbm=" + response[0]);
 
         //Samsung sends the count of bars that should be displayed instead of
-        //a real signal strength
-        int num_bars = (response[0] & 0xff00) >> 8;
+            //a real signal strength
+            response[0] = ((response[0] & 0xFF00) >> 8) * 3; //gsmDbm
+        } else {
+            response[0] = response[0] & 0xFF; //gsmDbm
 
         // Translate number of bars into something SignalStrength.java can understand
         switch (num_bars) {
@@ -884,6 +883,11 @@ public class U8500RIL extends RIL implements CommandsInterface {
         response[5] = (response[5] < 0)?-1:-response[5]; //evdoEcio
         if (response[6] < 0 || response[6] > 8) {
             response[6] = -1;
+
+        SignalStrength signalStrength = new SignalStrength(
+	            response[0], response[1], response[2], response[3], response[4],
+	            response[5], response[6], !mIsSamsungCdma);
+        return signalStrength;
         }
 
         Log.d(LOG_TAG, "responseSignalStength AFTER: gsmDbm=" + response[0]);
