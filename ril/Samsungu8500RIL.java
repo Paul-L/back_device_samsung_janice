@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 The CyanogenMod Project
+ * Copyright (C) 2011 The CyanogenMod Project <http://www.cyanogenmod.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,11 @@ import android.telephony.SmsMessage;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.android.internal.telephony.gsm.SmsBroadcastConfigInfo;
+import com.android.internal.telephony.gsm.SuppServiceNotification;
+import com.android.internal.telephony.cdma.CdmaCallWaitingNotification;
+import com.android.internal.telephony.cdma.CdmaInformationRecords;
+
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -61,8 +66,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 
-
-public class U8500RIL extends RIL implements CommandsInterface {
+public class SamsungU8500RIL extends RIL implements CommandsInterface {
 
     private boolean mSignalbarCount = SystemProperties.getInt("ro.telephony.sends_barcount", 0) == 1 ? true : false;
 
@@ -150,11 +154,12 @@ public class U8500RIL extends RIL implements CommandsInterface {
     static final int RIL_UNSOL_UTS_GET_UNREAD_SMS_STATUS = 11031;
     static final int RIL_UNSOL_MIP_CONNECT_STATUS = 11032;
 
-    protected HandlerThread mU8500Thread;
-    protected ConnectivityHandler mU8500Handler;
+    protected HandlerThread mSamsungu8500RILThread;
+    protected ConnectivityHandler mSamsungu8500RILHandler;
     private AudioManager audioManager;
+    private boolean mIsGBModem = SystemProperties.getBoolean("ro.ril.gbmodem", false);
 
-    public U8500RIL(Context context, int networkMode, int cdmaSubscription) {
+    public Samsungu8500RIL(Context context, int networkMode, int cdmaSubscription) {
         super(context, networkMode, cdmaSubscription);
         audioManager = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
         mQANElements = 5;
@@ -198,21 +203,21 @@ public class U8500RIL extends RIL implements CommandsInterface {
 
         if(NeedReconnect())
         {
-            if (mU8500Handler == null) {
+            if (mSamsungu8500RILHandler == null) {
 
-                handlerThread = new HandlerThread("mU8500Thread");
-                mU8500Thread = handlerThread;
+                handlerThread = new HandlerThread("mSamsungu8500RILThread");
+                mSamsungu8500RILThread = handlerThread;
 
-                mU8500Thread.start();
+                mSamsungu8500RILThread.start();
 
-                looper = mU8500Thread.getLooper();
-                mU8500Handler = new ConnectivityHandler(mContext, looper);
+                looper = mSamsungu8500RILThread.getLooper();
+                mSamsungu8500RILHandler = new ConnectivityHandler(mContext, looper);
             }
-            mU8500Handler.setPreferedNetworkType(networkType, response);
+            mSamsungu8500RILHandler.setPreferedNetworkType(networkType, response);
         } else {
-            if (mU8500Handler != null) {
-                mU8500Thread = null;
-                mU8500Handler = null;
+            if (mSamsungu8500RILHandler != null) {
+                mSamsungu85004RILThread = null;
+                mSamsungu85004RILHandler = null;
             }
             sendPreferedNetworktype(networkType, response);
         }
@@ -326,47 +331,46 @@ public class U8500RIL extends RIL implements CommandsInterface {
         synchronized (mRequestsList) {
           Iterator<RILRequest> itr = mRequestsList.iterator();
 
-          while ( itr.hasNext() ) {
-            RILRequest rr = itr.next();
+            while ( itr.hasNext() ) {
+                RILRequest rr = itr.next();
 
-            if (rr.mSerial == serial) {
-                itr.remove();
-                if (mRequestMessagesWaiting > 0)
-                    mRequestMessagesWaiting--;
-                return rr;
-            }
-            else
-            {
-              // We need some special code here for the Samsung RIL,
-              // which isn't responding to some requests.
-              // We will print a list of such stale requests which
-              // haven't yet received a response.  If the timeout fires
-              // first, then the wakelock is released without debugging.
-              timeDiff = removalTime - rr.creationTime;
-              if ( timeDiff > mWakeLockTimeout )
-              {
-                Log.d(LOG_TAG,  "No response for [" + rr.mSerial + "] " +
-                        requestToString(rr.mRequest) + " after " + timeDiff + " milliseconds.");
-
-                /* Don't actually remove anything for now.  Consider uncommenting this to
-                   purge stale requests */
-
-                /*
-                itr.remove();
-                if (mRequestMessagesWaiting > 0) {
-                    mRequestMessagesWaiting--;
+                if (rr.mSerial == serial) {
+                    itr.remove();
+                    if (mRequestMessagesWaiting > 0)
+                        mRequestMessagesWaiting--;
+                    return rr;
                 }
+                else
+                {
+                      // We need some special code here for the Samsung RIL,
+                      // which isn't responding to some requests.
+                      // We will print a list of such stale requests which
+                      // haven't yet received a response. If the timeout fires
+                      // first, then the wakelock is released without debugging.
+                    timeDiff = removalTime - rr.creationTime;
+                    if ( timeDiff > mWakeLockTimeout ) {
+                        Log.d(LOG_TAG, "No response for [" + rr.mSerial + "] " +
+                                requestToString(rr.mRequest) + " after " + timeDiff + " milliseconds.");
 
-                // We don't handle the callback (ie. rr.mResult) for
-                // RIL_REQUEST_SET_TTY_MODE, which is
-                // RIL_REQUEST_QUERY_TTY_MODE.  The reason for not doing
-                // so is because it will also not get a response from the
-                // Samsung RIL
-                rr.release();
-                */
-              }
+                        /* Don't actually remove anything for now. Consider uncommenting this to
+                           purge stale requests */
+
+                        /*
+                        itr.remove();
+                        if (mRequestMessagesWaiting > 0) {
+                            mRequestMessagesWaiting--;
+                        }
+
+                        // We don't handle the callback (ie. rr.mResult) for
+                        // RIL_REQUEST_SET_TTY_MODE, which is
+                        // RIL_REQUEST_QUERY_TTY_MODE. The reason for not doing
+                        // so is because it will also not get a response from the
+                        // Samsung RIL
+                        rr.release();
+                        */
+                    }
+                }
             }
-          }
         }
         return null;
     }
@@ -608,6 +612,7 @@ public class U8500RIL extends RIL implements CommandsInterface {
         int response = p.readInt();
 
         switch (response) {
+            case RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED: ret =  responseVoid(p); break;
             case RIL_UNSOL_RESPONSE_NEW_BROADCAST_SMS: ret = responseString(p); break;
             case RIL_UNSOL_RIL_CONNECTED: ret = responseInts(p); break;
             // SAMSUNG STATES
@@ -628,6 +633,35 @@ public class U8500RIL extends RIL implements CommandsInterface {
         }
 
         switch (response) {
+            case RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED:
+                /* has bonus radio state int */
+                int state = p.readInt();
+                Log.d(LOG_TAG, "Radio state: " + state);
+
+                switch (state) {
+                    case 2:
+                        // RADIO_UNAVAILABLE
+                        state = 1;
+                        break;
+                    case 3:
+                        // RADIO_ON
+                        state = 10;
+                        break;
+                    case 4:
+                        // RADIO_ON
+                        state = 10;
+                        // When SIM is PIN-unlocked, RIL doesn't respond with RIL_UNSOL_RESPONSE_SIM_STATUS_CHANGED.
+                        // We notify the system here.
+                        Log.d(LOG_TAG, "SIM is PIN-unlocked now");
+                        if (mIccStatusChangedRegistrants != null) {
+                            mIccStatusChangedRegistrants.notifyRegistrants();
+                        }
+                        break;
+                }
+                RadioState newState = getRadioStateFromInt(state);
+                Log.d(LOG_TAG, "New Radio state: " + state + " (" + newState.toString() + ")");
+                switchToRadioState(newState);
+                break;
             case RIL_UNSOL_RESPONSE_NEW_BROADCAST_SMS:
                 if (RILJ_LOGD) unsljLogRet(response, ret);
 
@@ -706,19 +740,6 @@ public class U8500RIL extends RIL implements CommandsInterface {
 
     protected void samsungUnsljLogvRet(int response, Object ret) {
         riljLogv("[UNSL]< " + samsungResponseToString(response) + " " + retToString(response, ret));
-    }
-
-    /**
-     * Notifiy all registrants that the ril has connected or disconnected.
-     *
-     * @param rilVer is the version of the ril or -1 if disconnected.
-     */
-    protected void notifyRegistrantsRilConnectionChanged(int rilVer) {
-        mRilVersion = rilVer;
-        if (mRilConnectedRegistrants != null) {
-            mRilConnectedRegistrants.notifyRegistrants(
-                                new AsyncResult (null, new Integer(rilVer), null));
-        }
     }
 
     /**
@@ -852,6 +873,7 @@ public class U8500RIL extends RIL implements CommandsInterface {
     responseSignalStrength(Parcel p) {
         int numInts = 12;
         int response[];
+        boolean isGsm = true;
 
         // Get raw data
         response = new int[numInts];
@@ -879,9 +901,10 @@ public class U8500RIL extends RIL implements CommandsInterface {
 
         }
 
-        Log.d(LOG_TAG, "responseSignalStength AFTER: gsmDbm=" + response[0]);
-
-        return response;
+        SignalStrength signalStrength = new SignalStrength(
+	            response[0], response[1], response[2], response[3], response[4],
+	            response[5], response[6], !mIsSamsungCdma);
+        return signalStrength;
     }
 
     @Override public void
