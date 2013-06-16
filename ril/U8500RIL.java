@@ -64,6 +64,8 @@ import java.util.Iterator;
 
 public class U8500RIL extends RIL implements CommandsInterface {
 
+    private boolean mSignalbarCount = SystemProperties.getInt("ro.telephony.sends_barcount", 0) == 1 ? true : false;
+
     //SAMSUNG STATES
     static final int RIL_REQUEST_GET_CELL_BROADCAST_CONFIG = 10002;
 
@@ -861,21 +863,12 @@ public class U8500RIL extends RIL implements CommandsInterface {
 
         //Samsung sends the count of bars that should be displayed instead of
             //a real signal strength
+        if(mSignalbarCount)
+        {
             response[0] = ((response[0] & 0xFF00) >> 8) * 3; //gsmDbm
         } else {
             response[0] = response[0] & 0xFF; //gsmDbm
-
-        // Translate number of bars into something SignalStrength.java can understand
-        switch (num_bars) {
-            case 0  : response[0] = 1;     break; // map to 0 bars
-            case 1  : response[0] = 3;     break; // map to 1 bar
-            case 2  : response[0] = 5;     break; // map to 2 bars
-            case 3  : response[0] = 8;     break; // map to 3 bars
-            case 4  : response[0] = 12;    break; // map to 4 bars
-            case 5  : response[0] = 15;    break; // map to 4 bars but give an extra 10 dBm
-            default : response[0] &= 0xff; break; // no idea; just pass value through
         }
-
         response[1] = -1; //gsmEcio
         response[2] = (response[2] < 0)?-120:-response[2]; //cdmaDbm
         response[3] = (response[3] < 0)?-160:-response[3]; //cdmaEcio
@@ -884,10 +877,6 @@ public class U8500RIL extends RIL implements CommandsInterface {
         if (response[6] < 0 || response[6] > 8) {
             response[6] = -1;
 
-        SignalStrength signalStrength = new SignalStrength(
-	            response[0], response[1], response[2], response[3], response[4],
-	            response[5], response[6], !mIsSamsungCdma);
-        return signalStrength;
         }
 
         Log.d(LOG_TAG, "responseSignalStength AFTER: gsmDbm=" + response[0]);
