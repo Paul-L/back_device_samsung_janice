@@ -29,6 +29,31 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.os.Handler;
+import android.os.Message;
+import android.os.AsyncResult;
+import android.os.Parcel;
+import android.os.SystemProperties;
+import android.telephony.PhoneNumberUtils;
+import android.telephony.SignalStrength;
+import static com.android.internal.telephony.RILConstants.*;
+
+import com.android.internal.telephony.CommandException;
+import com.android.internal.telephony.DataCallState;
+import com.android.internal.telephony.DataConnection.FailCause;
+import com.android.internal.telephony.gsm.SmsBroadcastConfigInfo;
+import com.android.internal.telephony.gsm.SuppServiceNotification;
+import com.android.internal.telephony.RILConstants;
+import com.android.internal.telephony.cdma.CdmaCallWaitingNotification;
+import com.android.internal.telephony.cdma.CdmaInformationRecords;
+import com.android.internal.telephony.cdma.CdmaInformationRecords.CdmaSignalInfoRec;
+import com.android.internal.telephony.cdma.SignalToneUtil;
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
@@ -157,6 +182,7 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
     protected ConnectivityHandler mSamsungu8500RILHandler;
     private AudioManager audioManager;
     private boolean mSignalbarCount = SystemProperties.getInt("ro.telephony.sends_barcount", 0) == 1 ? true : false;
+    private boolean mIsSamsungCdma = SystemProperties.getBoolean("ro.ril.samsung_cdma", false);
     private boolean mIsGBModem = SystemProperties.getBoolean("ro.ril.gbmodem", false);
 
     public SamsungU8500RIL(Context context, int networkMode, int cdmaSubscription) {
@@ -873,20 +899,23 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
     responseSignalStrength(Parcel p) {
         int numInts = 12;
         int response[];
-        boolean isGsm = true;
 
-        // Get raw data
+        /* TODO: Add SignalStrength class to match RIL_SignalStrength */
         response = new int[numInts];
         for (int i = 0 ; i < numInts ; i++) {
             response[i] = p.readInt();
         }
 
-        Log.d(LOG_TAG, "responseSignalStength BEFORE: gsmDbm=" + response[0]);
+        if (mIsSamsungCdma)
+            // Framework takes care of the rest for us.
+            return response;
 
-        //Samsung sends the count of bars that should be displayed instead of
-            //a real signal strength
+        /* Matching Samsung signal strength to asu.
+		   Method taken from Samsungs cdma/gsmSignalStateTracker */
         if(mSignalbarCount)
         {
+            //Samsung sends the count of bars that should be displayed instead of
+            //a real signal strength
             response[0] = ((response[0] & 0xFF00) >> 8) * 3; //gsmDbm
         } else {
             response[0] = response[0] & 0xFF; //gsmDbm
@@ -896,14 +925,13 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
         response[3] = (response[3] < 0)?-160:-response[3]; //cdmaEcio
         response[4] = (response[4] < 0)?-120:-response[4]; //evdoRssi
         response[5] = (response[5] < 0)?-1:-response[5]; //evdoEcio
-        if (response[6] < 0 || response[6] > 8) {
+        if(response[6] < 0 || response[6] > 8)
             response[6] = -1;
-        }
 
-        Log.d(LOG_TAG, "responseSignalStength AFTER: gsmDbm=" + response[0]);
-
-        return response;
-
+	SignalStrength signalStrength = new SignalStrength(
+	            response[0], response[1], response[2], response[3], response[4],
+	            response[5], response[6], !mIsSamsungCdma);
+        return signalStrength;
     }
 
     @Override public void
