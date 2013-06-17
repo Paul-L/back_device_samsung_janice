@@ -68,7 +68,6 @@ import java.util.Iterator;
 
 public class SamsungU8500RIL extends RIL implements CommandsInterface {
 
-    private boolean mSignalbarCount = SystemProperties.getInt("ro.telephony.sends_barcount", 0) == 1 ? true : false;
 
     //SAMSUNG STATES
     static final int RIL_REQUEST_GET_CELL_BROADCAST_CONFIG = 10002;
@@ -157,6 +156,7 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
     protected HandlerThread mSamsungu8500RILThread;
     protected ConnectivityHandler mSamsungu8500RILHandler;
     private AudioManager audioManager;
+    private boolean mSignalbarCount = SystemProperties.getInt("ro.telephony.sends_barcount", 0) == 1 ? true : false;
     private boolean mIsGBModem = SystemProperties.getBoolean("ro.ril.gbmodem", false);
 
     public SamsungU8500RIL(Context context, int networkMode, int cdmaSubscription) {
@@ -216,8 +216,8 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
             mSamsungu8500RILHandler.setPreferedNetworkType(networkType, response);
         } else {
             if (mSamsungu8500RILHandler != null) {
-                mSamsungu85004RILThread = null;
-                mSamsungu85004RILHandler = null;
+                mSamsungu8500RILThread = null;
+                mSamsungu8500RILHandler = null;
             }
             sendPreferedNetworktype(networkType, response);
         }
@@ -898,13 +898,12 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
         response[5] = (response[5] < 0)?-1:-response[5]; //evdoEcio
         if (response[6] < 0 || response[6] > 8) {
             response[6] = -1;
-
         }
 
-        SignalStrength signalStrength = new SignalStrength(
-	            response[0], response[1], response[2], response[3], response[4],
-	            response[5], response[6]);
-        return signalStrength;
+        Log.d(LOG_TAG, "responseSignalStength AFTER: gsmDbm=" + response[0]);
+
+        return response;
+
     }
 
     @Override public void
